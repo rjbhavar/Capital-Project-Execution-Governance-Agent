@@ -11,7 +11,6 @@ import ProjectIntelligence from './pages/ProjectIntelligence';
 import Budgets from './pages/Budgets';
 import Procurement from './pages/Procurement';
 import Reports from './pages/Reports';
-import Alerts from './pages/Alerts';
 import AgentWorkbench from './pages/AgentWorkbench';
 import ExecutiveBriefing from './pages/ExecutiveBriefing';
 import ProjectCommandCenter from './pages/ProjectCommandCenter';
@@ -62,7 +61,6 @@ function App() {
           <Route path="budgets" element={<Budgets />} />
           <Route path="procurement" element={<Procurement />} />
           <Route path="reports" element={<Reports />} />
-          <Route path="alerts" element={<Alerts />} />
           <Route path="agent-workbench" element={<AgentWorkbench />} />
           <Route path="agent-operations" element={<AgentOperationsCenter />} />
           <Route path="portfolio-intelligence" element={<PortfolioIntelligence />} />
