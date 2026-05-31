@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Bell, LogOut, Server, Activity, Clock, CheckCircle } from 'lucide-react';
+import { Search, Bell, LogOut, Server, Activity, Clock, CheckCircle, Command } from 'lucide-react';
 
-const Navbar = () => {
+const Navbar = ({ onOpenSearch, onOpenCommandPalette }) => {
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
   
@@ -32,16 +32,28 @@ const Navbar = () => {
   return (
     <header className="bg-white border-b border-gray-200 h-16 fixed top-0 right-0 left-64 z-10 shadow-sm">
       <div className="h-full px-6 flex items-center justify-between">
-        {/* Global Command Search */}
-        <div className="flex-1 max-w-2xl">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Global Command Search: Projects, Contracts, Budgets, Risks..."
-              className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
-            />
-          </div>
+        {/* Global Search */}
+        <div className="flex-1 max-w-2xl flex gap-2">
+          <button
+            onClick={onOpenSearch}
+            className="flex-1 flex items-center gap-3 px-4 py-2.5 border-2 border-gray-300 rounded-lg hover:border-blue-400 transition-all text-sm text-left group"
+          >
+            <Search className="w-5 h-5 text-gray-400 group-hover:text-blue-500" />
+            <span className="text-gray-500 group-hover:text-gray-700">Search projects, budgets, contracts...</span>
+            <kbd className="ml-auto px-2 py-1 bg-gray-100 border border-gray-300 rounded text-xs font-mono text-gray-600">
+              Cmd+/
+            </kbd>
+          </button>
+          <button
+            onClick={onOpenCommandPalette}
+            className="flex items-center gap-2 px-4 py-2.5 border-2 border-gray-300 rounded-lg hover:border-purple-400 transition-all text-sm group"
+            title="Command Palette"
+          >
+            <Command className="w-5 h-5 text-gray-400 group-hover:text-purple-500" />
+            <kbd className="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-xs font-mono text-gray-600">
+              Cmd+K
+            </kbd>
+          </button>
         </div>
 
         {/* Right Section */}
