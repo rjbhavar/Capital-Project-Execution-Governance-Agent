@@ -1,6 +1,11 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+// Get MREF URL from environment variable or use default
+const MREF_TARGET = process.env.VITE_MREF_URL || 'https://semas.facilities.semas.apps.srvengmas.cp.fyre.ibm.com';
+
+console.log('🔧 Vite Proxy Target:', MREF_TARGET);
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
@@ -10,7 +15,7 @@ export default defineConfig({
     open: true,
     proxy: {
       '/api': {
-        target: 'https://semas.facilities.semas.apps.srvengmas.cp.fyre.ibm.com',
+        target: MREF_TARGET,
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, ''),

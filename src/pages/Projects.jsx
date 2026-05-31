@@ -147,21 +147,6 @@ const Projects = () => {
         </GradientCard>
       )}
 
-      {/* Info Banner - Using Mock Data */}
-      {import.meta.env.VITE_USE_MOCK_DATA === 'true' && !loading && (
-        <GradientCard gradient="blue" className="p-4">
-          <div className="flex items-start gap-4">
-            <Brain className="w-6 h-6 text-blue-600 mt-1" />
-            <div className="flex-1">
-              <h3 className="font-semibold text-blue-900 mb-2">Demo Mode Active</h3>
-              <p className="text-blue-700 text-sm">
-                Currently showing demo data. To connect to live MREF API, set <code className="bg-blue-100 px-2 py-1 rounded">VITE_USE_MOCK_DATA=false</code> in your .env file.
-              </p>
-            </div>
-          </div>
-        </GradientCard>
-      )}
-
       {/* Error State */}
       {error && !loading && import.meta.env.VITE_USE_MOCK_DATA !== 'true' && (
         <GradientCard gradient="orange" className="p-4">

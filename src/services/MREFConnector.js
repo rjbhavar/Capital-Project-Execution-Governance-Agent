@@ -51,15 +51,27 @@ class MREFConnector {
       status: 'connecting'
     };
 
+    // In development, use proxy to avoid CORS issues
+    // In production, connect directly to MREF
+    const isDev = import.meta.env.DEV;
+    const baseURL = isDev ? '/api' : this.connection.url;
+    
+    console.log(`🔧 Using ${isDev ? 'proxy' : 'direct'} connection: ${baseURL}`);
+
     // Create axios instance for this connection
     this.axiosInstance = axios.create({
-      baseURL: this.connection.url,
+      baseURL,
       withCredentials: true,
       timeout: 30000, // 30 second timeout
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
-      }
+      },
+      // Accept self-signed certificates (for development/testing)
+      // In production, proper SSL certificates should be used
+      httpsAgent: typeof window === 'undefined' ? new (require('https').Agent)({
+        rejectUnauthorized: false
+      }) : undefined
     });
 
     // Store credentials for auto-recovery (in memory only)
@@ -93,6 +105,13 @@ class MREFConnector {
         {
           userName: username,
           password: password
+        },
+        {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
         }
       );
 
@@ -130,7 +149,21 @@ class MREFConnector {
       return true;
     } catch (error) {
       console.error('❌ MREFConnector: Authentication failed', error);
-      throw error;
+      
+      // Provide better error messages
+      if (error.code === 'ERR_NETWORK' || error.message.includes('Network Error')) {
+        throw new Error('Cannot connect to MREF server. This may be due to:\n• CORS restrictions (browser security)\n• VPN not connected\n• Server not accessible\n\nTry Demo Mode to explore the platform.');
+      }
+      
+      if (error.response?.status === 401) {
+        throw new Error('Invalid username or password');
+      }
+      
+      if (error.response?.status === 403) {
+        throw new Error('Access forbidden. Check your permissions.');
+      }
+      
+      throw new Error(error.message || 'Authentication failed');
     }
   }
 
@@ -406,7 +439,11 @@ class MREFConnector {
    */
   async testConnection(url) {
     try {
-      const response = await axios.head(url, {
+      // In development, test through proxy
+      const isDev = import.meta.env.DEV;
+      const testUrl = isDev ? '/api' : url;
+      
+      const response = await axios.head(testUrl, {
         timeout: 5000,
         validateStatus: () => true // Accept any status
       });

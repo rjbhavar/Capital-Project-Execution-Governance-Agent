@@ -6,17 +6,22 @@ import apiClient from './api';
 const parseBudgetData = (budgetData) => {
   if (!budgetData || typeof budgetData !== 'object') return null;
   
+  const parseNumber = (value) => {
+    const num = parseFloat(value);
+    return isNaN(num) ? 0 : num;
+  };
+  
   return {
-    id: budgetData['dcterms:identifier'],
-    name: budgetData['spi:triNameTX'],
-    status: budgetData['spi:triStatusCL'],
-    budgetType: budgetData['spi:triBudgetTypeCL'],
-    estimatedCost: parseFloat(budgetData['spi:triEstimatedCostFR']) || 0,
-    totalCost: parseFloat(budgetData['spi:triTotalCostFR']) || 0,
-    budgetAmount: parseFloat(budgetData['spi:triBudgetAmountFR']) || 0,
-    currency: budgetData['spi:triCurrencyUO'],
-    forecastCost: parseFloat(budgetData['spi:triForecastCostFR']) || 0,
-    incurredCost: parseFloat(budgetData['spi:triIncurredCostFR']) || 0,
+    id: budgetData['dcterms:identifier'] || null,
+    name: budgetData['spi:triNameTX'] || 'Unnamed Budget',
+    status: budgetData['spi:triStatusCL'] || 'Unknown',
+    budgetType: budgetData['spi:triBudgetTypeCL'] || 'N/A',
+    estimatedCost: parseNumber(budgetData['spi:triEstimatedCostFR']),
+    totalCost: parseNumber(budgetData['spi:triTotalCostFR']),
+    budgetAmount: parseNumber(budgetData['spi:triBudgetAmountFR']),
+    currency: budgetData['spi:triCurrencyUO'] || 'USD',
+    forecastCost: parseNumber(budgetData['spi:triForecastCostFR']),
+    incurredCost: parseNumber(budgetData['spi:triIncurredCostFR']),
     _raw: budgetData
   };
 };
@@ -27,15 +32,20 @@ const parseBudgetData = (budgetData) => {
 const parseProposalData = (proposalData) => {
   if (!proposalData || typeof proposalData !== 'object') return null;
   
+  const parseNumber = (value) => {
+    const num = parseFloat(value);
+    return isNaN(num) ? 0 : num;
+  };
+  
   return {
-    id: proposalData['dcterms:identifier'],
-    name: proposalData['spi:triNameTX'],
-    status: proposalData['spi:triStatusCL'],
-    proposalType: proposalData['spi:triProposalTypeCL'],
-    contactName: proposalData['spi:triContactNameTX'],
-    contactEmail: proposalData['spi:triContactEmailTX'],
-    proposalDate: proposalData['spi:triProposalDateDA'],
-    bidAmount: parseFloat(proposalData['spi:triBidAmountFR']) || 0,
+    id: proposalData['dcterms:identifier'] || null,
+    name: proposalData['spi:triNameTX'] || 'Unnamed Proposal',
+    status: proposalData['spi:triStatusCL'] || 'Unknown',
+    proposalType: proposalData['spi:triProposalTypeCL'] || 'N/A',
+    contactName: proposalData['spi:triContactNameTX'] || 'N/A',
+    contactEmail: proposalData['spi:triContactEmailTX'] || 'N/A',
+    proposalDate: proposalData['spi:triProposalDateDA'] || null,
+    bidAmount: parseNumber(proposalData['spi:triBidAmountFR']),
     _raw: proposalData
   };
 };
@@ -46,18 +56,23 @@ const parseProposalData = (proposalData) => {
 const parseContractsData = (contractsData) => {
   if (!contractsData) return [];
   
+  const parseNumber = (value) => {
+    const num = parseFloat(value);
+    return isNaN(num) ? 0 : num;
+  };
+  
   const contracts = Array.isArray(contractsData) ? contractsData : [contractsData];
   
   return contracts
     .filter(contract => contract && typeof contract === 'object' && !contract['rdf:resource'])
     .map(contract => ({
-      id: contract['dcterms:identifier'],
-      name: contract['spi:triNameTX'],
-      status: contract['spi:triStatusCL'],
-      contractType: contract['spi:triContractTypeCL'],
-      approvedAmount: parseFloat(contract['spi:triApprovedAmountFR']) || 0,
-      changeOrders: parseFloat(contract['spi:triChangeOrdersFR']) || 0,
-      contractState: contract['spi:triContractStateCL'],
+      id: contract['dcterms:identifier'] || null,
+      name: contract['spi:triNameTX'] || 'Unnamed Contract',
+      status: contract['spi:triStatusCL'] || 'Unknown',
+      contractType: contract['spi:triContractTypeCL'] || 'N/A',
+      approvedAmount: parseNumber(contract['spi:triApprovedAmountFR']),
+      changeOrders: parseNumber(contract['spi:triChangeOrdersFR']),
+      contractState: contract['spi:triContractStateCL'] || 'N/A',
       _raw: contract
     }));
 };
@@ -68,17 +83,22 @@ const parseContractsData = (contractsData) => {
 const parsePaymentData = (paymentData) => {
   if (!paymentData) return [];
   
+  const parseNumber = (value) => {
+    const num = parseFloat(value);
+    return isNaN(num) ? 0 : num;
+  };
+  
   const payments = Array.isArray(paymentData) ? paymentData : [paymentData];
   
   return payments
     .filter(payment => payment && typeof payment === 'object' && !payment['rdf:resource'])
     .map(payment => ({
-      id: payment['dcterms:identifier'],
-      name: payment['spi:triNameTX'],
-      status: payment['spi:triStatusCL'],
-      invoiceAmount: parseFloat(payment['spi:triInvoiceAmountFR']) || 0,
-      payee: payment['spi:triPayeeTX'],
-      paymentDate: payment['spi:triPaymentDateDA'],
+      id: payment['dcterms:identifier'] || null,
+      name: payment['spi:triNameTX'] || 'Unnamed Payment',
+      status: payment['spi:triStatusCL'] || 'Unknown',
+      invoiceAmount: parseNumber(payment['spi:triInvoiceAmountFR']),
+      payee: payment['spi:triPayeeTX'] || 'N/A',
+      paymentDate: payment['spi:triPaymentDateDA'] || null,
       _raw: payment
     }));
 };
@@ -105,13 +125,19 @@ export const fetchCapitalProjects = async () => {
       console.warn('⚠️ No projects found in MREF response');
     }
     
+    // Helper function to safely parse numbers
+    const parseNumber = (value) => {
+      const num = parseFloat(value);
+      return isNaN(num) ? 0 : num;
+    };
+    
     // Map OSLC fields to application format with all related data
     const projects = members.map((project, index) => {
-      const budget = parseFloat(project['spi:triBudgetOriginalRollupFR']) || 0;
-      const incurredInvoice = parseFloat(project['spi:triIncurredInvoiceRollupFR']) || 0;
-      const incurredPaid = parseFloat(project['spi:triIncurredPaidRollupFR']) || 0;
-      const commitmentOriginal = parseFloat(project['spi:triCommitmentOriginalRollupFR']) || 0;
-      const commitmentChanges = parseFloat(project['spi:triCommitmentChangesRollupFR']) || 0;
+      const budget = parseNumber(project['spi:triBudgetOriginalRollupFR']);
+      const incurredInvoice = parseNumber(project['spi:triIncurredInvoiceRollupFR']);
+      const incurredPaid = parseNumber(project['spi:triIncurredPaidRollupFR']);
+      const commitmentOriginal = parseNumber(project['spi:triCommitmentOriginalRollupFR']);
+      const commitmentChanges = parseNumber(project['spi:triCommitmentChangesRollupFR']);
       
       // Calculate total spent (invoiced + paid)
       const spent = incurredInvoice + incurredPaid;
@@ -217,11 +243,17 @@ export const fetchCapitalProjects = async () => {
  * Calculate project progress percentage
  */
 const calculateProgress = (project) => {
-  const budget = parseFloat(project['spi:triBudgetOriginalRollupFR']) || 0;
-  const spent = parseFloat(project['spi:triBudgetSpentRollupFR']) || 0;
+  const parseNumber = (value) => {
+    const num = parseFloat(value);
+    return isNaN(num) ? 0 : num;
+  };
+  
+  const budget = parseNumber(project['spi:triBudgetOriginalRollupFR']);
+  const spent = parseNumber(project['spi:triBudgetSpentRollupFR']);
   
   if (budget === 0) return 0;
-  return Math.min(Math.round((spent / budget) * 100), 100);
+  const progress = Math.round((spent / budget) * 100);
+  return isNaN(progress) ? 0 : Math.min(progress, 100);
 };
 
 /**
@@ -245,8 +277,13 @@ const calculateHealthScore = (project) => {
  * Calculate project risk score
  */
 const calculateRiskScore = (project) => {
-  const budget = parseFloat(project['spi:triBudgetOriginalRollupFR']) || 0;
-  const spent = parseFloat(project['spi:triBudgetSpentRollupFR']) || 0;
+  const parseNumber = (value) => {
+    const num = parseFloat(value);
+    return isNaN(num) ? 0 : num;
+  };
+  
+  const budget = parseNumber(project['spi:triBudgetOriginalRollupFR']);
+  const spent = parseNumber(project['spi:triBudgetSpentRollupFR']);
   const status = project['spi:triStatusCL'] || '';
   
   let risk = 30; // Base risk
@@ -280,7 +317,12 @@ const formatTimeline = (startDate, endDate) => {
  * Determine project priority
  */
 const determinePriority = (project) => {
-  const budget = parseFloat(project['spi:triBudgetOriginalRollupFR']) || 0;
+  const parseNumber = (value) => {
+    const num = parseFloat(value);
+    return isNaN(num) ? 0 : num;
+  };
+  
+  const budget = parseNumber(project['spi:triBudgetOriginalRollupFR']);
   const status = project['spi:triStatusCL'] || '';
   
   if (budget > 2000000 || status.toLowerCase().includes('critical')) return 'High';

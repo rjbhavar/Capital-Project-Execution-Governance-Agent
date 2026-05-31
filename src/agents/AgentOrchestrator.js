@@ -13,12 +13,14 @@
  * - Manages agent memory
  */
 
-import { PlanningAgent } from './specialized/PlanningAgent';
-import { BudgetIntelligenceAgent } from './specialized/BudgetIntelligenceAgent';
-import { ProcurementCoordinationAgent } from './specialized/ProcurementCoordinationAgent';
-import { ScheduleMonitoringAgent } from './specialized/ScheduleMonitoringAgent';
-import { RiskComplianceAgent } from './specialized/RiskComplianceAgent';
-import { ReportingAgent } from './specialized/ReportingAgent';
+import {
+  PlanningAgent,
+  BudgetIntelligenceAgent,
+  ProcurementCoordinationAgent,
+  ScheduleMonitoringAgent,
+  RiskComplianceAgent,
+  ReportingAgent
+} from './specialized/AllAgents';
 import { AgentMemory } from './AgentMemory';
 
 /**

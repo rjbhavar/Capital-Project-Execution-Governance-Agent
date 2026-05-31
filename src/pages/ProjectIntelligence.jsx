@@ -58,12 +58,12 @@ const ProjectIntelligence = () => {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-gray-900">Project Intelligence Workspace</h1>
-              <div className="flex items-center gap-4 mt-2">
-                <span className="text-sm text-gray-600">ID: {project.id}</span>
-                <span className="text-sm text-gray-600">•</span>
-                <span className="text-sm font-medium text-gray-900">{project.name}</span>
-                <span className="text-sm text-gray-600">•</span>
+              <h1 className="text-2xl font-bold text-gray-900">Project Intelligence</h1>
+              <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                <span>ID: {project.id}</span>
+                <span>•</span>
+                <span className="font-medium text-gray-900">{project.name}</span>
+                <span>•</span>
                 <span className={`px-2 py-1 rounded text-xs font-medium ${
                   project.status === 'In Progress' ? 'bg-blue-100 text-blue-800' :
                   project.status === 'Planning' ? 'bg-yellow-100 text-yellow-800' :
@@ -71,8 +71,8 @@ const ProjectIntelligence = () => {
                 }`}>
                   {project.status}
                 </span>
-                <span className="text-sm text-gray-600">•</span>
-                <span className="text-sm font-medium">Health: {project.healthScore}/100</span>
+                <span>•</span>
+                <span className="font-medium">Health: {project.healthScore || 0}/100</span>
               </div>
             </div>
             <div className="flex gap-2">
@@ -474,9 +474,9 @@ const ProjectIntelligence = () => {
               <p className="text-sm font-medium text-gray-500">Timeline Status</p>
               <p className="text-base font-semibold text-gray-900 mt-1">{project.timeline}</p>
             </div>
+    
           </div>
         </div>
-
       </div>
     </div>
   );

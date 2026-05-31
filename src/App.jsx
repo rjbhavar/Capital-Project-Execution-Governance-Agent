@@ -15,6 +15,10 @@ import Alerts from './pages/Alerts';
 import AgentWorkbench from './pages/AgentWorkbench';
 import ExecutiveBriefing from './pages/ExecutiveBriefing';
 import ProjectCommandCenter from './pages/ProjectCommandCenter';
+import AgentOperationsCenter from './pages/AgentOperationsCenter';
+import PortfolioIntelligence from './pages/PortfolioIntelligence';
+import ApprovalWorkbench from './pages/ApprovalWorkbench';
+import NotificationCenter from './pages/NotificationCenter';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -35,8 +39,8 @@ function App() {
           {/* Connection Screen - First screen */}
           <Route path="/connect" element={<ConnectionScreen />} />
           
-          {/* Capability Detection - After connection */}
-          <Route path="/capabilities" element={
+          {/* Capability Detection - Admin/Debug only (hidden from regular users) */}
+          <Route path="/admin/capabilities" element={
             <ProtectedRoute>
               <CapabilityDetection />
             </ProtectedRoute>
@@ -50,7 +54,8 @@ function App() {
               </DataProvider>
             </ProtectedRoute>
           }>
-          <Route index element={<Overview />} />
+          <Route index element={<Navigate to="/overview" replace />} />
+          <Route path="overview" element={<Overview />} />
           <Route path="projects" element={<Projects />} />
           <Route path="projects/:projectId/intelligence" element={<ProjectIntelligence />} />
           <Route path="projects/:projectId/command" element={<ProjectCommandCenter />} />
@@ -59,6 +64,10 @@ function App() {
           <Route path="reports" element={<Reports />} />
           <Route path="alerts" element={<Alerts />} />
           <Route path="agent-workbench" element={<AgentWorkbench />} />
+          <Route path="agent-operations" element={<AgentOperationsCenter />} />
+          <Route path="portfolio-intelligence" element={<PortfolioIntelligence />} />
+          <Route path="approvals" element={<ApprovalWorkbench />} />
+          <Route path="notifications" element={<NotificationCenter />} />
           <Route path="executive-briefing" element={<ExecutiveBriefing />} />
           </Route>
           
