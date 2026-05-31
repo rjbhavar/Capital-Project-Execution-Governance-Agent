@@ -178,4 +178,8 @@ export const ProgressRing = ({ percentage, size = 60, strokeWidth = 4, color = '
   );
 };
 
+// Default export for convenience (exports GradientCard as default)
+const PremiumCard = GradientCard;
+export default PremiumCard;
+
 // Made with Bob

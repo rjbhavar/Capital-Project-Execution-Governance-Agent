@@ -232,6 +232,9 @@ export const EventTypes = {
 // Export singleton instance
 export const eventBus = new EventBus();
 
+// Export EVENT_TYPES as alias for EventTypes (for consistency)
+export const EVENT_TYPES = EventTypes;
+
 export default eventBus;
 
 // Made with Bob
