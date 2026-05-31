@@ -1,24 +1,35 @@
 import axios from 'axios';
 
-const BASE_URL = import.meta.env.DEV ? '/api' : import.meta.env.VITE_MREF_BASE_URL;
-const USERNAME = import.meta.env.VITE_MREF_USERNAME;
-const PASSWORD = import.meta.env.VITE_MREF_PASSWORD;
-
 // Store session globally
 let sessionId = null;
 
 /**
- * Authenticate with MREF and create JSESSION
+ * Get base URL from session storage or env
  */
-export const login = async () => {
+const getBaseUrl = () => {
+  const storedUrl = sessionStorage.getItem('mref_url');
+  if (storedUrl) {
+    return import.meta.env.DEV ? '/api' : storedUrl;
+  }
+  return import.meta.env.DEV ? '/api' : import.meta.env.VITE_MREF_BASE_URL;
+};
+
+/**
+ * Authenticate with MREF and create JSESSION
+ * @param {string} username - MREF username
+ * @param {string} password - MREF password
+ */
+export const login = async (username, password) => {
   try {
     console.log('🔐 Attempting authentication...');
+    
+    const BASE_URL = getBaseUrl();
     
     const response = await axios.post(
       `${BASE_URL}/p/websignon/signon`,
       {
-        userName: USERNAME,
-        password: PASSWORD
+        userName: username,
+        password: password
       },
       {
         withCredentials: true,
@@ -110,16 +121,27 @@ export const clearSession = () => {
 };
 
 /**
- * Create authenticated session automatically
+ * Create authenticated session
+ * @param {string} username - MREF username (optional, uses env if not provided)
+ * @param {string} password - MREF password (optional, uses env if not provided)
  */
-export const createSession = async () => {
+export const createSession = async (username, password) => {
   if (hasSession()) {
     console.log('✅ Session already exists:', sessionId);
     return { success: true, sessionId };
   }
 
   console.log('🔐 Creating new session...');
-  return await login();
+  
+  // Use provided credentials or fall back to env variables
+  const user = username || import.meta.env.VITE_MREF_USERNAME;
+  const pass = password || import.meta.env.VITE_MREF_PASSWORD;
+  
+  if (!user || !pass) {
+    throw new Error('Username and password are required');
+  }
+  
+  return await login(user, pass);
 };
 
 // Made with Bob

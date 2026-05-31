@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '../components/common/Card';
 import { StatusBadge, RiskBadge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
@@ -19,10 +20,12 @@ import {
   ShoppingCart,
   CreditCard,
   AlertTriangle,
-  Search
+  Search,
+  Sparkles
 } from 'lucide-react';
 
 const Projects = () => {
+  const navigate = useNavigate();
   const { projects, loading, error, refresh } = useData();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -307,15 +310,26 @@ const Projects = () => {
                       <RiskBadge score={project.riskScore} />
                     </td>
                     <td className="py-4 px-4">
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        icon={Brain}
-                        onClick={() => handleRunAI(project.id)}
-                        className="shadow-md hover:shadow-lg transition-shadow"
-                      >
-                        AI Analysis
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          icon={Sparkles}
+                          onClick={() => navigate(`/projects/${project.id}/intelligence`)}
+                          className="shadow-md hover:shadow-lg transition-shadow"
+                        >
+                          Intelligence
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          icon={Brain}
+                          onClick={() => handleRunAI(project.id)}
+                          className="shadow-sm hover:shadow-md transition-shadow"
+                        >
+                          AI
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}

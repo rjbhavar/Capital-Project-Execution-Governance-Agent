@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { X, Building2, DollarSign, FileText, ShoppingCart, CreditCard, AlertTriangle, TrendingUp, Clock, Target, Zap, CheckCircle, XCircle } from 'lucide-react';
+import { X, Building2, DollarSign, FileText, ShoppingCart, CreditCard, AlertTriangle, TrendingUp, Clock, Target, Zap, CheckCircle, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { GradientCard, RadialProgress, InsightCard } from '../common/PremiumCard';
 
 const ProjectAnalysisModal = ({ project, onClose }) => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [expandedSections, setExpandedSections] = useState({});
 
   if (!project) return null;
 
@@ -14,6 +15,231 @@ const ProjectAnalysisModal = ({ project, onClose }) => {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount || 0);
+  };
+
+  const toggleSection = (sectionId) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId]
+    }));
+  };
+
+  // Field label mapping for OSLC technical names to business-friendly labels
+  const fieldLabelMap = {
+    // Project fields
+    'dcterms:identifier': 'Identifier',
+    'spi:triIdTX': 'Project ID',
+    'spi:triNameTX': 'Name',
+    'spi:triStatusCL': 'Status',
+    'spi:triPhaseCL': 'Phase',
+    'spi:triProjectClassificationLI': 'Classification',
+    'spi:triProjectTypeLI': 'Project Type',
+    'spi:triProjectLeadTX': 'Project Lead',
+    'spi:triCountryTX': 'Country',
+    'spi:triStateProvTX': 'State/Province',
+    'spi:triCityTX': 'City',
+    'spi:triProjectLocationTX': 'Location',
+    'spi:triCurrencyUO': 'Currency',
+    'spi:triProjectPlanStartDA': 'Planned Start Date',
+    'spi:triProjectPlanEndDA': 'Planned End Date',
+    'spi:triProjectActualStartDA': 'Actual Start Date',
+    'spi:triProjectActualEndDA': 'Actual End Date',
+    'spi:triBudgetOriginalRollupFR': 'Original Budget',
+    'spi:triBudgetSpentRollupFR': 'Budget Spent',
+    'spi:triIncurredInvoiceRollupFR': 'Incurred Invoice',
+    'spi:triIncurredPaidRollupFR': 'Incurred Paid',
+    'spi:triCommitmentOriginalRollupFR': 'Commitment Original',
+    'spi:triCommitmentChangesRollupFR': 'Commitment Changes',
+    'spi:OrgName': 'Organization',
+    'spi:triGrossAreaNU': 'Gross Area',
+    'spi:triUsableAreaNU': 'Usable Area',
+    'spi:triWorkflowStateCL': 'Workflow State',
+    'dcterms:created': 'Created Date',
+    'dcterms:modified': 'Modified Date',
+    'spi:triTimeZoneTX': 'Time Zone',
+    
+    // Budget fields
+    'spi:triBudgetTypeCL': 'Budget Type',
+    'spi:triForecastTypeCL': 'Forecast Type',
+    'spi:triEstimatedCostFR': 'Estimated Cost',
+    'spi:triTotalCostFR': 'Total Cost',
+    'spi:triBudgetAmountFR': 'Budget Amount',
+    'spi:triForecastCostFR': 'Forecast Cost',
+    'spi:triIncurredCostFR': 'Incurred Cost',
+    'spi:triBudgetChangesFR': 'Budget Changes',
+    'spi:triBudgetTransfersFR': 'Budget Transfers',
+    'spi:triCommitmentsFR': 'Commitments',
+    'spi:triInvoiceRollupFR': 'Invoice Rollup',
+    'spi:triPaidRollupFR': 'Paid Rollup',
+    'spi:triVarianceFR': 'Variance',
+    'spi:triBudgetOwnerTX': 'Budget Owner',
+    'spi:triBudgetWorkflowCL': 'Budget Workflow',
+    
+    // Proposal fields
+    'spi:triProposalTypeCL': 'Proposal Type',
+    'spi:triContactNameTX': 'Contact Name',
+    'spi:triContactEmailTX': 'Contact Email',
+    'spi:triContactPhoneTX': 'Contact Phone',
+    'spi:triProposalDateDA': 'Proposal Date',
+    'spi:triBidAmountFR': 'Bid Amount',
+    'spi:triRoutingStatusCL': 'Routing Status',
+    'spi:triApprovalStateCL': 'Approval State',
+    'spi:triProposalWorkflowCL': 'Proposal Workflow',
+    'spi:triSubmittedDateDA': 'Submitted Date',
+    'spi:triApprovedDateDA': 'Approved Date',
+    
+    // Contract fields
+    'spi:triContractTypeCL': 'Contract Type',
+    'spi:triApprovedAmountFR': 'Approved Amount',
+    'spi:triChangeOrdersFR': 'Change Orders',
+    'spi:triContractStateCL': 'Contract State',
+    'spi:triRevisionNumberNU': 'Revision Number',
+    'spi:triVendorNameTX': 'Vendor Name',
+    'spi:triVendorCodeTX': 'Vendor Code',
+    'spi:triContractStartDA': 'Contract Start Date',
+    'spi:triContractEndDA': 'Contract End Date',
+    'spi:triProcurementValueFR': 'Procurement Value',
+    'spi:triContractWorkflowCL': 'Contract Workflow',
+    
+    // Payment fields
+    'spi:triInvoiceAmountFR': 'Invoice Amount',
+    'spi:triPayeeTX': 'Payee',
+    'spi:triPaymentDateDA': 'Payment Date',
+    'spi:triInvoiceNumberTX': 'Invoice Number',
+    'spi:triInvoiceDateDA': 'Invoice Date',
+    'spi:triBillingAmountFR': 'Billing Amount',
+    'spi:triPaymentStatusCL': 'Payment Status',
+    'spi:triPaymentWorkflowCL': 'Payment Workflow',
+    'spi:triApprovalDateDA': 'Approval Date',
+    'spi:triPaymentMethodCL': 'Payment Method'
+  };
+
+  // Group fields by category
+  const categorizeFields = (data) => {
+    const categories = {
+      identification: [],
+      financial: [],
+      timeline: [],
+      location: [],
+      governance: [],
+      workflow: [],
+      metadata: [],
+      other: []
+    };
+
+    Object.entries(data).forEach(([key, value]) => {
+      if (key.startsWith('_') || key === 'rdf:resource' || key === 'rdf:about') return;
+      if (value === null || value === undefined || value === '') return;
+      if (typeof value === 'object' && !Array.isArray(value)) return;
+
+      const field = { key, value, label: fieldLabelMap[key] || formatFieldName(key) };
+
+      // Categorize based on field name patterns
+      if (key.includes('Id') || key.includes('identifier') || key.includes('Name') || key.includes('Type')) {
+        categories.identification.push(field);
+      } else if (key.includes('Amount') || key.includes('Cost') || key.includes('Budget') || key.includes('Currency') || key.includes('Variance') || key.includes('Rollup')) {
+        categories.financial.push(field);
+      } else if (key.includes('Date') || key.includes('Start') || key.includes('End') || key.includes('Timeline')) {
+        categories.timeline.push(field);
+      } else if (key.includes('Country') || key.includes('State') || key.includes('City') || key.includes('Location') || key.includes('Area')) {
+        categories.location.push(field);
+      } else if (key.includes('Status') || key.includes('State') || key.includes('Phase') || key.includes('Approval')) {
+        categories.governance.push(field);
+      } else if (key.includes('Workflow') || key.includes('Routing')) {
+        categories.workflow.push(field);
+      } else if (key.includes('created') || key.includes('modified') || key.includes('Owner') || key.includes('Lead')) {
+        categories.metadata.push(field);
+      } else {
+        categories.other.push(field);
+      }
+    });
+
+    return categories;
+  };
+
+  // Format technical field names to readable labels
+  const formatFieldName = (fieldName) => {
+    return fieldName
+      .replace(/^(spi:|dcterms:|rdf:)/, '')
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/([A-Z]{2,})/g, ' $1')
+      .replace(/(TX|CL|FR|NU|DA|LI|UO)$/g, '')
+      .trim()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
+  // Format field value for display
+  const formatFieldValue = (value, key) => {
+    if (value === null || value === undefined) return 'N/A';
+    
+    // Currency fields
+    if (key.includes('Amount') || key.includes('Cost') || key.includes('Budget') || key.includes('Rollup') || key.includes('Variance')) {
+      const numValue = parseFloat(value);
+      if (!isNaN(numValue)) {
+        return formatCurrency(numValue);
+      }
+    }
+    
+    // Date fields
+    if (key.includes('Date') || key.includes('DA')) {
+      try {
+        const date = new Date(value);
+        if (!isNaN(date.getTime())) {
+          return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          });
+        }
+      } catch (e) {
+        return value;
+      }
+    }
+    
+    // Number fields
+    if (key.includes('NU') && !isNaN(value)) {
+      return parseFloat(value).toLocaleString();
+    }
+    
+    return value.toString();
+  };
+
+  // Render field group
+  const FieldGroup = ({ title, fields, gradient = 'gray' }) => {
+    if (fields.length === 0) return null;
+    
+    const sectionId = title.toLowerCase().replace(/\s+/g, '-');
+    const isExpanded = expandedSections[sectionId] !== false; // Default to expanded
+
+    return (
+      <GradientCard gradient={gradient} className="p-6">
+        <button
+          onClick={() => toggleSection(sectionId)}
+          className="w-full flex items-center justify-between mb-4 hover:opacity-80 transition-opacity"
+        >
+          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+          {isExpanded ? (
+            <ChevronUp className="w-5 h-5 text-gray-600" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-gray-600" />
+          )}
+        </button>
+        {isExpanded && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {fields.map((field, index) => (
+              <div key={index} className="bg-white/60 rounded-lg p-4">
+                <p className="text-sm text-gray-600 mb-1">{field.label}</p>
+                <p className="font-semibold text-gray-900 break-words">
+                  {formatFieldValue(field.value, field.key)}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </GradientCard>
+    );
   };
 
   // Generate recommendations
@@ -177,35 +403,25 @@ const ProjectAnalysisModal = ({ project, onClose }) => {
                 </GradientCard>
               </div>
 
-              <GradientCard gradient="gray" className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Project Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="bg-white/60 rounded-lg p-4">
-                    <p className="text-sm text-gray-600 mb-1">Status</p>
-                    <p className="font-semibold text-gray-900">{project.status}</p>
-                  </div>
-                  <div className="bg-white/60 rounded-lg p-4">
-                    <p className="text-sm text-gray-600 mb-1">Phase</p>
-                    <p className="font-semibold text-gray-900">{project.phase}</p>
-                  </div>
-                  <div className="bg-white/60 rounded-lg p-4">
-                    <p className="text-sm text-gray-600 mb-1">Building</p>
-                    <p className="font-semibold text-gray-900">{project.building}</p>
-                  </div>
-                  <div className="bg-white/60 rounded-lg p-4">
-                    <p className="text-sm text-gray-600 mb-1">Project Manager</p>
-                    <p className="font-semibold text-gray-900">{project.projectManager}</p>
-                  </div>
-                  <div className="bg-white/60 rounded-lg p-4">
-                    <p className="text-sm text-gray-600 mb-1">Location</p>
-                    <p className="font-semibold text-gray-900">{project.city}, {project.state}</p>
-                  </div>
-                  <div className="bg-white/60 rounded-lg p-4">
-                    <p className="text-sm text-gray-600 mb-1">Timeline</p>
-                    <p className="font-semibold text-gray-900">{project.timeline}</p>
-                  </div>
-                </div>
-              </GradientCard>
+              {(() => {
+                const rawData = project._raw || project;
+                const categories = categorizeFields(rawData);
+                
+                return (
+                  <>
+                    <FieldGroup title="Project Identification" fields={categories.identification} gradient="blue" />
+                    <FieldGroup title="Financial Information" fields={categories.financial} gradient="green" />
+                    <FieldGroup title="Timeline & Dates" fields={categories.timeline} gradient="purple" />
+                    <FieldGroup title="Location Details" fields={categories.location} gradient="orange" />
+                    <FieldGroup title="Governance & Status" fields={categories.governance} gradient="red" />
+                    <FieldGroup title="Workflow Information" fields={categories.workflow} gradient="gray" />
+                    <FieldGroup title="Metadata" fields={categories.metadata} gradient="gray" />
+                    {categories.other.length > 0 && (
+                      <FieldGroup title="Additional Information" fields={categories.other} gradient="gray" />
+                    )}
+                  </>
+                );
+              })()}
             </div>
           )}
 
@@ -217,7 +433,7 @@ const ProjectAnalysisModal = ({ project, onClose }) => {
                     <GradientCard gradient="green" className="p-6">
                       <p className="text-sm text-gray-600 mb-2">Budget Amount</p>
                       <p className="text-3xl font-bold text-gray-900">{formatCurrency(project.budgetDetails.budgetAmount)}</p>
-                      <p className="text-sm text-gray-600 mt-2">{project.budgetDetails.budgetStatus}</p>
+                      <p className="text-sm text-gray-600 mt-2">{project.budgetDetails.status || 'Active'}</p>
                     </GradientCard>
                     <GradientCard gradient="blue" className="p-6">
                       <p className="text-sm text-gray-600 mb-2">Incurred Cost</p>
@@ -231,29 +447,24 @@ const ProjectAnalysisModal = ({ project, onClose }) => {
                     </GradientCard>
                   </div>
 
-                  <GradientCard gradient="gray" className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Budget Intelligence</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="bg-white/60 rounded-lg p-4">
-                        <p className="text-sm text-gray-600 mb-1">Budget Name</p>
-                        <p className="font-semibold text-gray-900">{project.budgetDetails.budgetName || 'N/A'}</p>
-                      </div>
-                      <div className="bg-white/60 rounded-lg p-4">
-                        <p className="text-sm text-gray-600 mb-1">Estimated Cost</p>
-                        <p className="font-semibold text-gray-900">{formatCurrency(project.budgetDetails.estimatedCost)}</p>
-                      </div>
-                      <div className="bg-white/60 rounded-lg p-4">
-                        <p className="text-sm text-gray-600 mb-1">Currency</p>
-                        <p className="font-semibold text-gray-900">{project.budgetDetails.currency || 'USD'}</p>
-                      </div>
-                      <div className="bg-white/60 rounded-lg p-4">
-                        <p className="text-sm text-gray-600 mb-1">Variance</p>
-                        <p className={`font-semibold ${(project.budgetDetails.budgetAmount - project.budgetDetails.incurredCost) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {formatCurrency(project.budgetDetails.budgetAmount - project.budgetDetails.incurredCost)}
-                        </p>
-                      </div>
-                    </div>
-                  </GradientCard>
+                  {(() => {
+                    const rawData = project.budgetDetails._raw || project.budgetDetails;
+                    const categories = categorizeFields(rawData);
+                    
+                    return (
+                      <>
+                        <FieldGroup title="Budget Identification" fields={categories.identification} gradient="blue" />
+                        <FieldGroup title="Financial Details" fields={categories.financial} gradient="green" />
+                        <FieldGroup title="Budget Timeline" fields={categories.timeline} gradient="purple" />
+                        <FieldGroup title="Budget Governance" fields={categories.governance} gradient="red" />
+                        <FieldGroup title="Budget Workflow" fields={categories.workflow} gradient="gray" />
+                        <FieldGroup title="Budget Metadata" fields={categories.metadata} gradient="gray" />
+                        {categories.other.length > 0 && (
+                          <FieldGroup title="Additional Budget Information" fields={categories.other} gradient="gray" />
+                        )}
+                      </>
+                    );
+                  })()}
                 </>
               ) : (
                 <GradientCard gradient="gray" className="p-12 text-center">
@@ -267,39 +478,54 @@ const ProjectAnalysisModal = ({ project, onClose }) => {
 
           {activeTab === 'procurement' && (
             <div className="space-y-6">
-              {project.hasContracts && project.contractDetails ? (
+              {project.hasContracts && project.contractDetails && project.contractDetails.length > 0 ? (
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <GradientCard gradient="orange" className="p-6">
-                      <p className="text-sm text-gray-600 mb-2">Contract Amount</p>
-                      <p className="text-3xl font-bold text-gray-900">{formatCurrency(project.contractDetails.approvedAmount)}</p>
-                      <p className="text-sm text-gray-600 mt-2">{project.contractDetails.contractStatus}</p>
-                    </GradientCard>
-                    <GradientCard gradient="blue" className="p-6">
-                      <p className="text-sm text-gray-600 mb-2">Change Orders</p>
-                      <p className="text-3xl font-bold text-gray-900">{project.contractDetails.changeOrders || 0}</p>
-                      <p className="text-sm text-gray-600 mt-2">Contract modifications</p>
-                    </GradientCard>
-                    <GradientCard gradient="purple" className="p-6">
-                      <p className="text-sm text-gray-600 mb-2">Contract State</p>
-                      <p className="text-2xl font-bold text-gray-900">{project.contractDetails.contractState || 'Active'}</p>
-                      <p className="text-sm text-gray-600 mt-2">Current status</p>
-                    </GradientCard>
-                  </div>
+                  {project.contractDetails.map((contract, index) => {
+                    const rawData = contract._raw || contract;
+                    const categories = categorizeFields(rawData);
+                    
+                    return (
+                      <div key={index} className="space-y-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <h2 className="text-xl font-bold text-gray-900">
+                            Contract {index + 1}: {contract.name || 'Unnamed Contract'}
+                          </h2>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <GradientCard gradient="orange" className="p-6">
+                            <p className="text-sm text-gray-600 mb-2">Approved Amount</p>
+                            <p className="text-3xl font-bold text-gray-900">{formatCurrency(contract.approvedAmount)}</p>
+                            <p className="text-sm text-gray-600 mt-2">{contract.status || 'Active'}</p>
+                          </GradientCard>
+                          <GradientCard gradient="blue" className="p-6">
+                            <p className="text-sm text-gray-600 mb-2">Change Orders</p>
+                            <p className="text-3xl font-bold text-gray-900">{formatCurrency(contract.changeOrders || 0)}</p>
+                            <p className="text-sm text-gray-600 mt-2">Modifications</p>
+                          </GradientCard>
+                          <GradientCard gradient="purple" className="p-6">
+                            <p className="text-sm text-gray-600 mb-2">Contract State</p>
+                            <p className="text-2xl font-bold text-gray-900">{contract.contractState || 'N/A'}</p>
+                            <p className="text-sm text-gray-600 mt-2">Current status</p>
+                          </GradientCard>
+                        </div>
 
-                  <GradientCard gradient="gray" className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Contract Details</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="bg-white/60 rounded-lg p-4">
-                        <p className="text-sm text-gray-600 mb-1">Contract Name</p>
-                        <p className="font-semibold text-gray-900">{project.contractDetails.contractName || 'N/A'}</p>
+                        <FieldGroup title="Contract Identification" fields={categories.identification} gradient="blue" />
+                        <FieldGroup title="Financial Details" fields={categories.financial} gradient="green" />
+                        <FieldGroup title="Contract Timeline" fields={categories.timeline} gradient="purple" />
+                        <FieldGroup title="Contract Governance" fields={categories.governance} gradient="red" />
+                        <FieldGroup title="Contract Workflow" fields={categories.workflow} gradient="gray" />
+                        <FieldGroup title="Contract Metadata" fields={categories.metadata} gradient="gray" />
+                        {categories.other.length > 0 && (
+                          <FieldGroup title="Additional Contract Information" fields={categories.other} gradient="gray" />
+                        )}
+                        
+                        {index < project.contractDetails.length - 1 && (
+                          <div className="border-t-2 border-gray-300 my-8"></div>
+                        )}
                       </div>
-                      <div className="bg-white/60 rounded-lg p-4">
-                        <p className="text-sm text-gray-600 mb-1">Contract Type</p>
-                        <p className="font-semibold text-gray-900">{project.contractDetails.contractType || 'N/A'}</p>
-                      </div>
-                    </div>
-                  </GradientCard>
+                    );
+                  })}
                 </>
               ) : (
                 <GradientCard gradient="gray" className="p-12 text-center">
@@ -314,19 +540,44 @@ const ProjectAnalysisModal = ({ project, onClose }) => {
           {activeTab === 'proposal' && (
             <div className="space-y-6">
               {project.hasProposal && project.proposalDetails ? (
-                <GradientCard gradient="gray" className="p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Proposal Information</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-white/60 rounded-lg p-4">
-                      <p className="text-sm text-gray-600 mb-1">Proposal Status</p>
-                      <p className="font-semibold text-gray-900">{project.proposalDetails.status || 'N/A'}</p>
-                    </div>
-                    <div className="bg-white/60 rounded-lg p-4">
-                      <p className="text-sm text-gray-600 mb-1">Proposal Type</p>
-                      <p className="font-semibold text-gray-900">{project.proposalDetails.type || 'N/A'}</p>
-                    </div>
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <GradientCard gradient="blue" className="p-6">
+                      <p className="text-sm text-gray-600 mb-2">Proposal Status</p>
+                      <p className="text-2xl font-bold text-gray-900">{project.proposalDetails.status || 'N/A'}</p>
+                      <p className="text-sm text-gray-600 mt-2">Current state</p>
+                    </GradientCard>
+                    <GradientCard gradient="green" className="p-6">
+                      <p className="text-sm text-gray-600 mb-2">Bid Amount</p>
+                      <p className="text-3xl font-bold text-gray-900">{formatCurrency(project.proposalDetails.bidAmount || 0)}</p>
+                      <p className="text-sm text-gray-600 mt-2">Proposed value</p>
+                    </GradientCard>
+                    <GradientCard gradient="purple" className="p-6">
+                      <p className="text-sm text-gray-600 mb-2">Proposal Type</p>
+                      <p className="text-2xl font-bold text-gray-900">{project.proposalDetails.proposalType || 'N/A'}</p>
+                      <p className="text-sm text-gray-600 mt-2">Category</p>
+                    </GradientCard>
                   </div>
-                </GradientCard>
+
+                  {(() => {
+                    const rawData = project.proposalDetails._raw || project.proposalDetails;
+                    const categories = categorizeFields(rawData);
+                    
+                    return (
+                      <>
+                        <FieldGroup title="Proposal Identification" fields={categories.identification} gradient="blue" />
+                        <FieldGroup title="Financial Details" fields={categories.financial} gradient="green" />
+                        <FieldGroup title="Proposal Timeline" fields={categories.timeline} gradient="purple" />
+                        <FieldGroup title="Proposal Governance" fields={categories.governance} gradient="red" />
+                        <FieldGroup title="Proposal Workflow" fields={categories.workflow} gradient="gray" />
+                        <FieldGroup title="Proposal Metadata" fields={categories.metadata} gradient="gray" />
+                        {categories.other.length > 0 && (
+                          <FieldGroup title="Additional Proposal Information" fields={categories.other} gradient="gray" />
+                        )}
+                      </>
+                    );
+                  })()}
+                </>
               ) : (
                 <GradientCard gradient="gray" className="p-12 text-center">
                   <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -339,20 +590,55 @@ const ProjectAnalysisModal = ({ project, onClose }) => {
 
           {activeTab === 'payments' && (
             <div className="space-y-6">
-              {project.hasPayments && project.paymentDetails ? (
-                <GradientCard gradient="gray" className="p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Information</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-white/60 rounded-lg p-4">
-                      <p className="text-sm text-gray-600 mb-1">Payment Status</p>
-                      <p className="font-semibold text-gray-900">{project.paymentDetails.status || 'N/A'}</p>
-                    </div>
-                    <div className="bg-white/60 rounded-lg p-4">
-                      <p className="text-sm text-gray-600 mb-1">Invoice Amount</p>
-                      <p className="font-semibold text-gray-900">{formatCurrency(project.paymentDetails.invoiceAmount)}</p>
-                    </div>
-                  </div>
-                </GradientCard>
+              {project.hasPayments && project.paymentDetails && project.paymentDetails.length > 0 ? (
+                <>
+                  {project.paymentDetails.map((payment, index) => {
+                    const rawData = payment._raw || payment;
+                    const categories = categorizeFields(rawData);
+                    
+                    return (
+                      <div key={index} className="space-y-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <h2 className="text-xl font-bold text-gray-900">
+                            Payment {index + 1}: {payment.name || 'Unnamed Payment'}
+                          </h2>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <GradientCard gradient="green" className="p-6">
+                            <p className="text-sm text-gray-600 mb-2">Invoice Amount</p>
+                            <p className="text-3xl font-bold text-gray-900">{formatCurrency(payment.invoiceAmount || 0)}</p>
+                            <p className="text-sm text-gray-600 mt-2">Total billed</p>
+                          </GradientCard>
+                          <GradientCard gradient="blue" className="p-6">
+                            <p className="text-sm text-gray-600 mb-2">Payment Status</p>
+                            <p className="text-2xl font-bold text-gray-900">{payment.status || 'N/A'}</p>
+                            <p className="text-sm text-gray-600 mt-2">Current state</p>
+                          </GradientCard>
+                          <GradientCard gradient="purple" className="p-6">
+                            <p className="text-sm text-gray-600 mb-2">Payee</p>
+                            <p className="text-xl font-bold text-gray-900">{payment.payee || 'N/A'}</p>
+                            <p className="text-sm text-gray-600 mt-2">Recipient</p>
+                          </GradientCard>
+                        </div>
+
+                        <FieldGroup title="Payment Identification" fields={categories.identification} gradient="blue" />
+                        <FieldGroup title="Financial Details" fields={categories.financial} gradient="green" />
+                        <FieldGroup title="Payment Timeline" fields={categories.timeline} gradient="purple" />
+                        <FieldGroup title="Payment Governance" fields={categories.governance} gradient="red" />
+                        <FieldGroup title="Payment Workflow" fields={categories.workflow} gradient="gray" />
+                        <FieldGroup title="Payment Metadata" fields={categories.metadata} gradient="gray" />
+                        {categories.other.length > 0 && (
+                          <FieldGroup title="Additional Payment Information" fields={categories.other} gradient="gray" />
+                        )}
+                        
+                        {index < project.paymentDetails.length - 1 && (
+                          <div className="border-t-2 border-gray-300 my-8"></div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </>
               ) : (
                 <GradientCard gradient="gray" className="p-12 text-center">
                   <CreditCard className="w-16 h-16 text-gray-400 mx-auto mb-4" />

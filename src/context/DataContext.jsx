@@ -1,7 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { fetchCapitalProjects } from '../services/capitalProjects';
-import { createSession } from '../services/auth';
-import { mockProjects } from '../mock/projects';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import { mcpLayer } from '../services/MCPLayer';
+import { instanceMetadataService } from '../services/InstanceMetadataService';
+import { useConnection } from './ConnectionContext';
+import { calculateProjectHealth } from '../utils/projectHealthEngine';
+import { generateProjectRecommendations } from '../utils/agentRecommendationEngine';
+import { generateExecutiveSummary, generateShortSummary } from '../utils/executiveSummaryGenerator';
 
 const DataContext = createContext();
 
@@ -14,16 +17,63 @@ export const useData = () => {
 };
 
 export const DataProvider = ({ children }) => {
-  const [projects, setProjects] = useState([]);
+  const { connected, setInstanceMetadata } = useConnection();
+  const [rawProjects, setRawProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [authenticated, setAuthenticated] = useState(false);
   const [lastFetch, setLastFetch] = useState(null);
+  const [discoveryComplete, setDiscoveryComplete] = useState(false);
 
-  // Load data once on mount
+  // Calculate health scores, recommendations, and summaries for all projects
+  const projects = useMemo(() => {
+    return rawProjects.map(project => {
+      const health = calculateProjectHealth(project);
+      const recommendations = generateProjectRecommendations(project);
+      const executiveSummary = generateExecutiveSummary(project);
+      const shortSummary = generateShortSummary(project);
+      return {
+        ...project,
+        healthScore: health.score,
+        healthRating: health.rating,
+        healthColor: health.color,
+        healthFactors: health.factors,
+        recommendations,
+        executiveSummary,
+        shortSummary
+      };
+    });
+  }, [rawProjects]);
+
+  // Perform instance discovery after connection
+  const performDiscovery = useCallback(async () => {
+    if (!connected || discoveryComplete) {
+      return;
+    }
+
+    try {
+      console.log('🔍 Performing instance discovery...');
+      const metadata = await instanceMetadataService.discover();
+      setInstanceMetadata(metadata);
+      setDiscoveryComplete(true);
+      console.log('✅ Instance discovery complete');
+    } catch (error) {
+      console.error('❌ Instance discovery failed:', error);
+      // Continue anyway - discovery is optional
+      setDiscoveryComplete(true);
+    }
+  }, [connected, discoveryComplete, setInstanceMetadata]);
+
+  // Load data once on mount or when connection changes
   const loadData = useCallback(async (force = false) => {
+    // Skip if not connected
+    if (!connected) {
+      console.log('⚠️ Not connected to MREF');
+      setLoading(false);
+      return;
+    }
+
     // Skip if already loaded and not forcing refresh
-    if (!force && projects.length > 0 && authenticated) {
+    if (!force && rawProjects.length > 0) {
       console.log('✅ Using cached data');
       return;
     }
@@ -32,48 +82,35 @@ export const DataProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      const useMockData = import.meta.env.VITE_USE_MOCK_DATA === 'true';
-      
-      if (useMockData) {
-        console.log('📊 Using mock data (demo mode)');
-        setProjects(mockProjects);
-        setAuthenticated(true);
-      } else {
-        try {
-          // Authenticate once
-          if (!authenticated || force) {
-            console.log('🔐 Authenticating...');
-            await createSession();
-            setAuthenticated(true);
-          }
-          
-          // Fetch all data once
-          console.log('📡 Fetching all project data...');
-          const projectData = await fetchCapitalProjects();
-          setProjects(projectData);
-          setLastFetch(new Date());
-          console.log(`✅ Loaded ${projectData.length} projects into cache`);
-        } catch (apiError) {
-          console.warn('⚠️ API fetch failed, using mock data:', apiError.message);
-          setProjects(mockProjects);
-          setAuthenticated(true);
-          setError('Using demo data');
-        }
+      // Perform discovery if not done yet
+      if (!discoveryComplete) {
+        await performDiscovery();
       }
+      
+      // Fetch all data via MCP Layer
+      console.log('📡 Fetching all project data via MCP...');
+      const projectData = await mcpLayer.getCapitalProjects({
+        includeRelated: true,
+        forceRefresh: force
+      });
+      
+      setRawProjects(projectData);
+      setLastFetch(new Date());
+      console.log(`✅ Loaded ${projectData.length} projects into cache`);
     } catch (err) {
       console.error('❌ Error loading data:', err);
-      setProjects(mockProjects);
-      setAuthenticated(true);
-      setError('Error occurred. Showing demo data.');
+      setError(err.message || 'Failed to load project data');
     } finally {
       setLoading(false);
     }
-  }, [projects.length, authenticated]);
+  }, [connected, rawProjects.length, discoveryComplete, performDiscovery]);
 
-  // Load data on mount
+  // Load data when connected
   useEffect(() => {
-    loadData();
-  }, []); // Only run once on mount
+    if (connected) {
+      loadData();
+    }
+  }, [connected]); // Run when connection status changes
 
   // Refresh function for manual refresh
   const refresh = useCallback(() => {
@@ -85,9 +122,10 @@ export const DataProvider = ({ children }) => {
     projects,
     loading,
     error,
-    authenticated,
+    connected,
     lastFetch,
-    refresh
+    refresh,
+    discoveryComplete
   };
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;

@@ -1,30 +1,72 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ConnectionProvider } from './context/ConnectionContext';
 import { DataProvider } from './context/DataContext';
 import MainLayout from './layouts/MainLayout';
+import ConnectionScreen from './pages/ConnectionScreen';
+import CapabilityDetection from './pages/CapabilityDetection';
 import Overview from './pages/Overview';
 import Projects from './pages/Projects';
+import ProjectIntelligence from './pages/ProjectIntelligence';
 import Budgets from './pages/Budgets';
 import Procurement from './pages/Procurement';
 import Reports from './pages/Reports';
 import Alerts from './pages/Alerts';
+import AgentWorkbench from './pages/AgentWorkbench';
+import ExecutiveBriefing from './pages/ExecutiveBriefing';
+import ProjectCommandCenter from './pages/ProjectCommandCenter';
+
+// Protected Route Component
+const ProtectedRoute = ({ children }) => {
+  const connection = sessionStorage.getItem('mref_connection');
+  
+  if (!connection) {
+    return <Navigate to="/connect" replace />;
+  }
+  
+  return children;
+};
 
 function App() {
   return (
-    <DataProvider>
-      <Router>
+    <Router>
+      <ConnectionProvider>
         <Routes>
-          <Route path="/" element={<MainLayout />}>
-            <Route index element={<Overview />} />
-            <Route path="projects" element={<Projects />} />
-            <Route path="budgets" element={<Budgets />} />
-            <Route path="procurement" element={<Procurement />} />
-            <Route path="reports" element={<Reports />} />
-            <Route path="alerts" element={<Alerts />} />
+          {/* Connection Screen - First screen */}
+          <Route path="/connect" element={<ConnectionScreen />} />
+          
+          {/* Capability Detection - After connection */}
+          <Route path="/capabilities" element={
+            <ProtectedRoute>
+              <CapabilityDetection />
+            </ProtectedRoute>
+          } />
+          
+          {/* Protected Routes - Require authentication */}
+          <Route path="/" element={
+            <ProtectedRoute>
+              <DataProvider>
+                <MainLayout />
+              </DataProvider>
+            </ProtectedRoute>
+          }>
+          <Route index element={<Overview />} />
+          <Route path="projects" element={<Projects />} />
+          <Route path="projects/:projectId/intelligence" element={<ProjectIntelligence />} />
+          <Route path="projects/:projectId/command" element={<ProjectCommandCenter />} />
+          <Route path="budgets" element={<Budgets />} />
+          <Route path="procurement" element={<Procurement />} />
+          <Route path="reports" element={<Reports />} />
+          <Route path="alerts" element={<Alerts />} />
+          <Route path="agent-workbench" element={<AgentWorkbench />} />
+          <Route path="executive-briefing" element={<ExecutiveBriefing />} />
           </Route>
+          
+          {/* Redirect root to connection screen if not authenticated */}
+          <Route path="*" element={<Navigate to="/connect" replace />} />
         </Routes>
-      </Router>
-    </DataProvider>
+      </ConnectionProvider>
+    </Router>
   );
 }
 

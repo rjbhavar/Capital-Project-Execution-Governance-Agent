@@ -11,17 +11,21 @@ import {
   FileText,
   Bell,
   Settings,
-  Brain
+  Brain,
+  Zap,
+  Briefcase
 } from 'lucide-react';
 
 const Sidebar = () => {
   const navItems = [
     { path: '/', icon: Home, label: 'Overview' },
+    { path: '/executive-briefing', icon: Briefcase, label: 'Executive Briefing' },
     { path: '/projects', icon: FolderKanban, label: 'Projects' },
     { path: '/budgets', icon: DollarSign, label: 'Budgets' },
     { path: '/procurement', icon: ShoppingCart, label: 'Procurement' },
     { path: '/reports', icon: FileText, label: 'Reports' },
     { path: '/alerts', icon: Bell, label: 'Alerts' },
+    { path: '/agent-workbench', icon: Zap, label: 'Agent Workbench' },
     { path: '/milestones', icon: Flag, label: 'Milestones', disabled: true },
     { path: '/tasks', icon: CheckSquare, label: 'Tasks', disabled: true },
     { path: '/risks', icon: Shield, label: 'Risks', disabled: true },

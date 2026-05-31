@@ -20,7 +20,11 @@ import {
   AlertCircle,
   Activity,
   Target,
-  Zap
+  Zap,
+  Brain,
+  Sparkles,
+  TrendingDown,
+  Calendar
 } from 'lucide-react';
 
 const Overview = () => {
@@ -165,6 +169,242 @@ const Overview = () => {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Executive Overview</h1>
           <p className="text-gray-600 mt-1">Capital Project Portfolio Command Center</p>
+        </div>
+      </div>
+
+      {/* Agent Command Center - Today's Briefing */}
+      <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700 rounded-2xl shadow-2xl overflow-hidden">
+        <div className="p-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+              <Brain className="w-7 h-7 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                Agent Command Center
+                <Sparkles className="w-5 h-5 text-yellow-300" />
+              </h2>
+              <p className="text-blue-100 text-sm">AI-powered executive intelligence • Updated in real-time</p>
+            </div>
+          </div>
+
+          {/* Today's Agent Briefing */}
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 mb-6">
+            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <Calendar className="w-5 h-5" />
+              Today's Agent Briefing
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Portfolio Health Score */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-blue-100 text-sm font-medium">Portfolio Health</span>
+                  <TrendingUp className="w-4 h-4 text-green-300" />
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold text-white">{stats.avgHealthScore}</span>
+                  <span className="text-lg text-blue-100">/100</span>
+                </div>
+                <p className="text-xs text-blue-200 mt-1">
+                  {stats.avgHealthScore >= 80 ? 'Excellent' : stats.avgHealthScore >= 60 ? 'Good' : 'Needs Attention'}
+                </p>
+              </div>
+
+              {/* Critical Actions */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-blue-100 text-sm font-medium">Critical Actions</span>
+                  <AlertTriangle className="w-4 h-4 text-yellow-300" />
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold text-white">{atRiskProjects + delayedProjects}</span>
+                  <span className="text-lg text-blue-100">items</span>
+                </div>
+                <p className="text-xs text-blue-200 mt-1">
+                  Require immediate attention
+                </p>
+              </div>
+
+              {/* Budget Status */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-blue-100 text-sm font-medium">Budget Status</span>
+                  <DollarSign className="w-4 h-4 text-green-300" />
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold text-white">{budgetUtilization.toFixed(0)}</span>
+                  <span className="text-lg text-blue-100">%</span>
+                </div>
+                <p className="text-xs text-blue-200 mt-1">
+                  {budgetUtilization > 90 ? 'High utilization' : 'Within limits'}
+                </p>
+              </div>
+
+              {/* Timeline Engine */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-blue-100 text-sm font-medium">Timeline Status</span>
+                  <Clock className="w-4 h-4 text-orange-300" />
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold text-white">{stats.activeProjects - delayedProjects}</span>
+                  <span className="text-lg text-blue-100">on track</span>
+                </div>
+                <p className="text-xs text-blue-200 mt-1">
+                  {delayedProjects > 0 ? `${delayedProjects} delayed` : 'All on schedule'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Agent Insights & Recommendations */}
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-6">
+            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-yellow-300" />
+              Agent Insights & Recommendations
+            </h3>
+            <div className="space-y-3">
+              {/* Dynamic Insights based on data */}
+              {atRiskProjects > 0 && (
+                <div className="bg-red-500/20 backdrop-blur-sm border border-red-400/30 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="w-5 h-5 text-red-300 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="font-semibold text-white mb-1">High Risk Projects Detected</p>
+                      <p className="text-sm text-red-100 mb-2">
+                        {atRiskProjects} project{atRiskProjects > 1 ? 's have' : ' has'} risk scores above 60. Immediate review recommended.
+                      </p>
+                      <button
+                        onClick={() => navigate('/projects')}
+                        className="text-xs font-medium text-white bg-red-500/30 hover:bg-red-500/50 px-3 py-1 rounded-md transition-colors"
+                      >
+                        Review Projects →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {delayedProjects > 0 && (
+                <div className="bg-orange-500/20 backdrop-blur-sm border border-orange-400/30 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <Clock className="w-5 h-5 text-orange-300 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="font-semibold text-white mb-1">Timeline Delays Identified</p>
+                      <p className="text-sm text-orange-100 mb-2">
+                        {delayedProjects} project{delayedProjects > 1 ? 's are' : ' is'} past deadline. Schedule adjustment may be required.
+                      </p>
+                      <button
+                        onClick={() => navigate('/projects')}
+                        className="text-xs font-medium text-white bg-orange-500/30 hover:bg-orange-500/50 px-3 py-1 rounded-md transition-colors"
+                      >
+                        View Timeline →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {budgetUtilization > 85 && (
+                <div className="bg-yellow-500/20 backdrop-blur-sm border border-yellow-400/30 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <DollarSign className="w-5 h-5 text-yellow-300 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="font-semibold text-white mb-1">Budget Utilization Alert</p>
+                      <p className="text-sm text-yellow-100 mb-2">
+                        Portfolio budget utilization at {budgetUtilization.toFixed(1)}%. Consider budget reallocation or additional funding.
+                      </p>
+                      <button
+                        onClick={() => navigate('/budgets')}
+                        className="text-xs font-medium text-white bg-yellow-500/30 hover:bg-yellow-500/50 px-3 py-1 rounded-md transition-colors"
+                      >
+                        Review Budgets →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {pendingProposals > 0 && (
+                <div className="bg-blue-500/20 backdrop-blur-sm border border-blue-400/30 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <FileText className="w-5 h-5 text-blue-300 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="font-semibold text-white mb-1">Pending Approvals</p>
+                      <p className="text-sm text-blue-100 mb-2">
+                        {pendingProposals} proposal{pendingProposals > 1 ? 's await' : ' awaits'} approval. Review and action recommended.
+                      </p>
+                      <button
+                        onClick={() => navigate('/projects')}
+                        className="text-xs font-medium text-white bg-blue-500/30 hover:bg-blue-500/50 px-3 py-1 rounded-md transition-colors"
+                      >
+                        Review Proposals →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {atRiskProjects === 0 && delayedProjects === 0 && budgetUtilization <= 85 && pendingProposals === 0 && (
+                <div className="bg-green-500/20 backdrop-blur-sm border border-green-400/30 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-300 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="font-semibold text-white mb-1">All Systems Operational</p>
+                      <p className="text-sm text-green-100">
+                        Portfolio is performing within expected parameters. No critical actions required at this time.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Execution Recommendations */}
+          <div className="mt-6 bg-white/10 backdrop-blur-md rounded-xl p-6">
+            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <Target className="w-5 h-5 text-green-300" />
+              Execution Recommendations
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 bg-green-500/30 rounded-lg flex items-center justify-center">
+                    <CheckCircle className="w-5 h-5 text-green-300" />
+                  </div>
+                  <span className="font-semibold text-white">Priority Actions</span>
+                </div>
+                <p className="text-sm text-blue-100">
+                  Focus on {atRiskProjects > 0 ? 'high-risk projects' : 'maintaining current momentum'}
+                </p>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 bg-blue-500/30 rounded-lg flex items-center justify-center">
+                    <Activity className="w-5 h-5 text-blue-300" />
+                  </div>
+                  <span className="font-semibold text-white">Resource Optimization</span>
+                </div>
+                <p className="text-sm text-blue-100">
+                  {budgetUtilization > 85 ? 'Review budget allocation' : 'Resources well distributed'}
+                </p>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 bg-purple-500/30 rounded-lg flex items-center justify-center">
+                    <TrendingUp className="w-5 h-5 text-purple-300" />
+                  </div>
+                  <span className="font-semibold text-white">Performance Trend</span>
+                </div>
+                <p className="text-sm text-blue-100">
+                  {stats.avgHealthScore >= 80 ? 'Excellent trajectory' : 'Improvement needed'}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
