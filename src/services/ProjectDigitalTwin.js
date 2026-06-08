@@ -93,24 +93,34 @@ class ProjectDigitalTwin {
     const project = this.data.project;
 
     try {
-      // Load budget
-      if (project.hasBudget && project.budgetId) {
-        this.data.budget = await mcpLayer.getBudget(project.budgetId);
+      // Load budget (from embedded data or API)
+      if (project.hasBudget) {
+        this.data.budget = project.budgetDetails || (project.budgetId ? await mcpLayer.getBudget(project.budgetId) : null);
       }
 
-      // Load proposal
-      if (project.hasProposal && project.proposalId) {
-        this.data.proposal = await mcpLayer.getProposal(project.proposalId);
+      // Load proposal (from embedded data or API)
+      if (project.hasProposal) {
+        this.data.proposal = project.proposalDetails || (project.proposalId ? await mcpLayer.getProposal(project.proposalId) : null);
       }
 
-      // Load contracts
+      // Load contracts with line items (from embedded data or API)
       if (project.hasContracts) {
-        this.data.contracts = await mcpLayer.getContracts(this.projectId);
+        this.data.contracts = project.contractDetails || await mcpLayer.getContracts(this.projectId);
       }
 
-      // Load payments
+      // Load payments (from embedded data or API)
       if (project.hasPayments) {
-        this.data.payments = await mcpLayer.getPayments(this.projectId);
+        this.data.payments = project.paymentDetails || await mcpLayer.getPayments(this.projectId);
+      }
+
+      // Load contact roles (from embedded data)
+      if (project.hasContactRoles) {
+        this.data.contactRoles = project.contactRoles || [];
+      }
+
+      // Load purchase orders with line items (from embedded data or API)
+      if (project.hasPurchaseOrders) {
+        this.data.purchaseOrders = project.purchaseOrderDetails || await mcpLayer.getPurchaseOrders(this.projectId);
       }
 
       // Load tasks/milestones (when API available)
@@ -118,6 +128,12 @@ class ProjectDigitalTwin {
       // this.data.milestones = await mcpLayer.getMilestones(this.projectId);
 
       console.log('ProjectDigitalTwin: Loaded linked resources');
+      console.log(`  - Budget: ${this.data.budget ? 'Yes' : 'No'}`);
+      console.log(`  - Proposal: ${this.data.proposal ? 'Yes' : 'No'}`);
+      console.log(`  - Contracts: ${this.data.contracts?.length || 0}`);
+      console.log(`  - Payments: ${this.data.payments?.length || 0}`);
+      console.log(`  - Contact Roles: ${this.data.contactRoles?.length || 0}`);
+      console.log(`  - Purchase Orders: ${this.data.purchaseOrders?.length || 0}`);
     } catch (error) {
       console.error('Failed to load linked resources:', error);
       // Don't throw - partial data is acceptable
@@ -426,6 +442,8 @@ class ProjectDigitalTwin {
       proposal: this.data.proposal,
       contracts: this.data.contracts,
       payments: this.data.payments,
+      contactRoles: this.data.contactRoles,
+      purchaseOrders: this.data.purchaseOrders,
       
       // Agent data
       findings: this.findings,

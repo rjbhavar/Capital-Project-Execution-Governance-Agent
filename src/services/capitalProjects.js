@@ -70,9 +70,13 @@ const parseContractsData = (contractsData) => {
       name: contract['spi:triNameTX'] || 'Unnamed Contract',
       status: contract['spi:triStatusCL'] || 'Unknown',
       contractType: contract['spi:triContractTypeCL'] || 'N/A',
+      vendor: contract['spi:triVendorTX'] || 'N/A',
       approvedAmount: parseNumber(contract['spi:triApprovedAmountFR']),
       changeOrders: parseNumber(contract['spi:triChangeOrdersFR']),
       contractState: contract['spi:triContractStateCL'] || 'N/A',
+      startDate: contract['spi:triStartDateDA'] || null,
+      endDate: contract['spi:triEndDateDA'] || null,
+      lineItems: parseContractLineItems(contract['spi:cstContractLineItem']),
       _raw: contract
     }));
 };
@@ -104,14 +108,118 @@ const parsePaymentData = (paymentData) => {
 };
 
 /**
+ * Parse Contact Roles data from embedded response
+ */
+const parseContactRolesData = (contactRolesData) => {
+  if (!contactRolesData) return [];
+  
+  const roles = Array.isArray(contactRolesData) ? contactRolesData : [contactRolesData];
+  
+  return roles
+    .filter(role => role && typeof role === 'object' && !role['rdf:resource'])
+    .map(role => ({
+      id: role['dcterms:identifier'] || null,
+      roleName: role['spi:triRoleNameTX'] || 'Unknown Role',
+      personName: role['spi:triPersonNameTX'] || 'N/A',
+      organization: role['spi:triOrganizationTX'] || 'N/A',
+      email: role['spi:triEmailTX'] || 'N/A',
+      phone: role['spi:triPhoneTX'] || 'N/A',
+      isPrimary: role['spi:triIsPrimaryBO'] === 'true' || role['spi:triIsPrimaryBO'] === true,
+      _raw: role
+    }));
+};
+
+/**
+ * Parse Contract Line Items from contract data
+ */
+const parseContractLineItems = (lineItemsData) => {
+  if (!lineItemsData) return [];
+  
+  const parseNumber = (value) => {
+    const num = parseFloat(value);
+    return isNaN(num) ? 0 : num;
+  };
+  
+  const lineItems = Array.isArray(lineItemsData) ? lineItemsData : [lineItemsData];
+  
+  return lineItems
+    .filter(item => item && typeof item === 'object' && !item['rdf:resource'])
+    .map(item => ({
+      id: item['dcterms:identifier'] || null,
+      description: item['spi:triDescriptionTX'] || 'N/A',
+      quantity: parseNumber(item['spi:triQuantityNU']),
+      rate: parseNumber(item['spi:triRateFR']),
+      total: parseNumber(item['spi:triTotalFR']),
+      costCode: item['spi:triCostCodeTX'] || 'N/A',
+      unit: item['spi:triUnitTX'] || 'N/A',
+      _raw: item
+    }));
+};
+
+/**
+ * Parse Purchase Order Line Items from PO data
+ */
+const parsePurchaseOrderLineItems = (lineItemsData) => {
+  if (!lineItemsData) return [];
+  
+  const parseNumber = (value) => {
+    const num = parseFloat(value);
+    return isNaN(num) ? 0 : num;
+  };
+  
+  const lineItems = Array.isArray(lineItemsData) ? lineItemsData : [lineItemsData];
+  
+  return lineItems
+    .filter(item => item && typeof item === 'object' && !item['rdf:resource'])
+    .map(item => ({
+      id: item['dcterms:identifier'] || null,
+      description: item['spi:triDescriptionTX'] || 'N/A',
+      quantity: parseNumber(item['spi:triQuantityNU']),
+      rate: parseNumber(item['spi:triRateFR']),
+      total: parseNumber(item['spi:triTotalFR']),
+      itemDescription: item['spi:triItemDescriptionTX'] || 'N/A',
+      unit: item['spi:triUnitTX'] || 'N/A',
+      _raw: item
+    }));
+};
+
+/**
+ * Parse Purchase Orders data from embedded response
+ */
+const parsePurchaseOrdersData = (poData) => {
+  if (!poData) return [];
+  
+  const parseNumber = (value) => {
+    const num = parseFloat(value);
+    return isNaN(num) ? 0 : num;
+  };
+  
+  const purchaseOrders = Array.isArray(poData) ? poData : [poData];
+  
+  return purchaseOrders
+    .filter(po => po && typeof po === 'object' && !po['rdf:resource'])
+    .map(po => ({
+      id: po['dcterms:identifier'] || null,
+      name: po['spi:triNameTX'] || 'Unnamed PO',
+      poNumber: po['spi:triPONumberTX'] || 'N/A',
+      status: po['spi:triStatusCL'] || 'Unknown',
+      vendor: po['spi:triVendorTX'] || 'N/A',
+      amount: parseNumber(po['spi:triAmountFR']),
+      issueDate: po['spi:triIssueDateDA'] || null,
+      lineItems: parsePurchaseOrderLineItems(po['spi:cstPurchaseLineItem']),
+      _raw: po
+    }));
+};
+
+/**
  * Fetch all capital projects from MREF OSLC API with all related data
- * Uses comprehensive query that includes Budget, Proposal, Contracts, and Payments
+ * Uses comprehensive query that includes Budget, Proposal, Contracts, Payments, ContactRoles, and Purchase Orders
  */
 export const fetchCapitalProjects = async () => {
   try {
     console.log('📡 Fetching capital projects with related data from MREF...');
     const response = await apiClient.get(
-      '/oslc/spq/cstCapitalProjectQC?oslc.select=*,spi:cstBudget{*},spi:cstProposal{*},spi:cstContracts{*},spi:cstPayment{*}'
+      '/oslc/spq/cstCapitalProjectQC?oslc.select=*,spi:cstBudget{*},spi:cstProposal{*},spi:cstContracts{*,spi:cstContractLineItem{*}},spi:cstPayment{*},spi:ContactRoles{*},spi:cstPurchaseOrder{*,spi:cstPurchaseLineItem{*}}'
     );
     
     console.log('📦 Raw API Response:', response.data);
@@ -166,6 +274,18 @@ export const fetchCapitalProjects = async () => {
         ? parsePaymentData(paymentData)
         : [];
       
+      // Parse embedded Contact Roles data (can be array)
+      const contactRolesData = project['spi:ContactRoles'];
+      const contactRoles = contactRolesData
+        ? parseContactRolesData(contactRolesData)
+        : [];
+      
+      // Parse embedded Purchase Orders data (can be array)
+      const purchaseOrderData = project['spi:cstPurchaseOrder'];
+      const purchaseOrderDetails = purchaseOrderData
+        ? parsePurchaseOrdersData(purchaseOrderData)
+        : [];
+      
       return {
         id: project['dcterms:identifier'] || `project-${index + 1}`,
         projectId: project['spi:triIdTX'] || `ID-${index + 1}`,
@@ -208,12 +328,16 @@ export const fetchCapitalProjects = async () => {
         proposalDetails: proposalDetails,
         contractDetails: contractDetails,
         paymentDetails: paymentDetails,
+        contactRoles: contactRoles,
+        purchaseOrderDetails: purchaseOrderDetails,
         
         // Flags
         hasBudget: budgetDetails !== null,
         hasProposal: proposalDetails !== null,
         hasContracts: contractDetails.length > 0,
         hasPayments: paymentDetails.length > 0,
+        hasContactRoles: contactRoles.length > 0,
+        hasPurchaseOrders: purchaseOrderDetails.length > 0,
         
         // Raw data for debugging
         _raw: project
@@ -224,12 +348,16 @@ export const fetchCapitalProjects = async () => {
     const projectsWithProposals = projects.filter(p => p.hasProposal).length;
     const projectsWithContracts = projects.filter(p => p.hasContracts).length;
     const projectsWithPayments = projects.filter(p => p.hasPayments).length;
+    const projectsWithContactRoles = projects.filter(p => p.hasContactRoles).length;
+    const projectsWithPurchaseOrders = projects.filter(p => p.hasPurchaseOrders).length;
     
     console.log(`✅ Fetched ${projects.length} capital projects from MREF`);
     console.log(`   - ${projectsWithBudgets} with budgets`);
     console.log(`   - ${projectsWithProposals} with proposals`);
     console.log(`   - ${projectsWithContracts} with contracts`);
     console.log(`   - ${projectsWithPayments} with payments`);
+    console.log(`   - ${projectsWithContactRoles} with contact roles`);
+    console.log(`   - ${projectsWithPurchaseOrders} with purchase orders`);
     
     return projects;
     

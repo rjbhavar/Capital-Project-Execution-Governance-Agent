@@ -44,21 +44,44 @@ const OverviewEnhanced = () => {
     }
   };
 
-  // Calculate portfolio metrics
+  // Calculate portfolio metrics with new data
   const metrics = useMemo(() => {
     const totalProjects = projects.length;
     const activeProjects = projects.filter(p => p.status === 'In Progress').length;
     const totalBudget = projects.reduce((sum, p) => sum + (p.budget || 0), 0);
     const totalSpent = projects.reduce((sum, p) => sum + (p.spent || 0), 0);
-    const avgHealth = projects.length > 0 
+    const avgHealth = projects.length > 0
       ? Math.round(projects.reduce((sum, p) => sum + (p.healthScore || 0), 0) / projects.length)
       : 0;
     
     const atRisk = projects.filter(p => (p.healthScore || 0) < 60).length;
     const onTrack = projects.filter(p => (p.healthScore || 0) >= 80).length;
-    const needsAttention = projects.filter(p => 
+    const needsAttention = projects.filter(p =>
       (p.healthScore || 0) >= 60 && (p.healthScore || 0) < 80
     ).length;
+
+    // Calculate new metrics from embedded data
+    const totalContracts = projects.reduce((sum, p) => sum + (p.contractDetails?.length || 0), 0);
+    const totalContractValue = projects.reduce((sum, p) => {
+      return sum + (p.contractDetails?.reduce((cSum, c) => cSum + (c.approvedAmount || 0), 0) || 0);
+    }, 0);
+
+    const totalPOs = projects.reduce((sum, p) => sum + (p.purchaseOrderDetails?.length || 0), 0);
+    const totalPOValue = projects.reduce((sum, p) => {
+      return sum + (p.purchaseOrderDetails?.reduce((poSum, po) => poSum + (po.amount || 0), 0) || 0);
+    }, 0);
+
+    const totalPayments = projects.reduce((sum, p) => sum + (p.paymentDetails?.length || 0), 0);
+    const totalPaymentValue = projects.reduce((sum, p) => {
+      return sum + (p.paymentDetails?.reduce((pSum, pay) => pSum + (pay.invoiceAmount || 0), 0) || 0);
+    }, 0);
+
+    const projectsWithBudgets = projects.filter(p => p.hasBudget).length;
+    const projectsWithProposals = projects.filter(p => p.hasProposal).length;
+    const projectsWithContracts = projects.filter(p => p.hasContracts).length;
+    const projectsWithPayments = projects.filter(p => p.hasPayments).length;
+    const projectsWithContactRoles = projects.filter(p => p.hasContactRoles).length;
+    const projectsWithPOs = projects.filter(p => p.hasPurchaseOrders).length;
 
     return {
       totalProjects,
@@ -69,7 +92,20 @@ const OverviewEnhanced = () => {
       atRisk,
       onTrack,
       needsAttention,
-      budgetUtilization: totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0
+      budgetUtilization: totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0,
+      // New metrics
+      totalContracts,
+      totalContractValue,
+      totalPOs,
+      totalPOValue,
+      totalPayments,
+      totalPaymentValue,
+      projectsWithBudgets,
+      projectsWithProposals,
+      projectsWithContracts,
+      projectsWithPayments,
+      projectsWithContactRoles,
+      projectsWithPOs
     };
   }, [projects]);
 
