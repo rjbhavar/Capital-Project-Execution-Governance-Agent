@@ -17,7 +17,7 @@ class OSLCService {
   constructor(resourceType, endpoint) {
     this.resourceType = resourceType;
     this.endpoint = endpoint;
-    this.useMock = true; // Toggle for mock vs real API
+    this.useMock = false; // Production mode - use real MREF API
   }
 
   /**

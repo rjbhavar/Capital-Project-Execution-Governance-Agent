@@ -15,7 +15,25 @@ import { agentActionExecutor } from './agentActions';
 class ProjectDigitalTwin {
   constructor(projectId) {
     this.projectId = projectId;
-    this.data = {};
+    this.data = {
+      project: null,
+      budget: [],
+      proposal: null,
+      contracts: [],
+      payments: [],
+      contactRoles: [],
+      purchaseOrders: [],
+      funding: [],
+      invoices: [],
+      risks: [],
+      meetings: [],
+      tasks: [],
+      milestones: [],
+      issues: [],
+      approvals: [],
+      pendingActions: [],
+      healthMetrics: null
+    };
     this.findings = [];
     this.recommendations = [];
     this.history = [];
@@ -123,9 +141,69 @@ class ProjectDigitalTwin {
         this.data.purchaseOrders = project.purchaseOrderDetails || await mcpLayer.getPurchaseOrders(this.projectId);
       }
 
-      // Load tasks/milestones (when API available)
-      // this.data.tasks = await mcpLayer.getTasks(this.projectId);
-      // this.data.milestones = await mcpLayer.getMilestones(this.projectId);
+      // Load funding requests
+      try {
+        this.data.funding = await mcpLayer.getFundingRequests(this.projectId);
+      } catch (error) {
+        console.log('Funding data not available:', error.message);
+        this.data.funding = [];
+      }
+
+      // Load invoices
+      try {
+        this.data.invoices = await mcpLayer.getInvoices(this.projectId);
+      } catch (error) {
+        console.log('Invoice data not available:', error.message);
+        this.data.invoices = [];
+      }
+
+      // Load risks
+      try {
+        this.data.risks = await mcpLayer.getRisks(this.projectId);
+      } catch (error) {
+        console.log('Risk data not available:', error.message);
+        this.data.risks = [];
+      }
+
+      // Load meetings
+      try {
+        this.data.meetings = await mcpLayer.getMeetings(this.projectId);
+      } catch (error) {
+        console.log('Meeting data not available:', error.message);
+        this.data.meetings = [];
+      }
+
+      // Load tasks
+      try {
+        this.data.tasks = await mcpLayer.getTasks(this.projectId);
+      } catch (error) {
+        console.log('Task data not available:', error.message);
+        this.data.tasks = [];
+      }
+
+      // Load milestones
+      try {
+        this.data.milestones = await mcpLayer.getMilestones(this.projectId);
+      } catch (error) {
+        console.log('Milestone data not available:', error.message);
+        this.data.milestones = [];
+      }
+
+      // Load issues
+      try {
+        this.data.issues = await mcpLayer.getIssues(this.projectId);
+      } catch (error) {
+        console.log('Issue data not available:', error.message);
+        this.data.issues = [];
+      }
+
+      // Load approvals
+      try {
+        this.data.approvals = await mcpLayer.getApprovals(this.projectId);
+      } catch (error) {
+        console.log('Approval data not available:', error.message);
+        this.data.approvals = [];
+      }
 
       console.log('ProjectDigitalTwin: Loaded linked resources');
       console.log(`  - Budget: ${this.data.budget ? 'Yes' : 'No'}`);
@@ -134,6 +212,14 @@ class ProjectDigitalTwin {
       console.log(`  - Payments: ${this.data.payments?.length || 0}`);
       console.log(`  - Contact Roles: ${this.data.contactRoles?.length || 0}`);
       console.log(`  - Purchase Orders: ${this.data.purchaseOrders?.length || 0}`);
+      console.log(`  - Funding: ${this.data.funding?.length || 0}`);
+      console.log(`  - Invoices: ${this.data.invoices?.length || 0}`);
+      console.log(`  - Risks: ${this.data.risks?.length || 0}`);
+      console.log(`  - Meetings: ${this.data.meetings?.length || 0}`);
+      console.log(`  - Tasks: ${this.data.tasks?.length || 0}`);
+      console.log(`  - Milestones: ${this.data.milestones?.length || 0}`);
+      console.log(`  - Issues: ${this.data.issues?.length || 0}`);
+      console.log(`  - Approvals: ${this.data.approvals?.length || 0}`);
     } catch (error) {
       console.error('Failed to load linked resources:', error);
       // Don't throw - partial data is acceptable
@@ -444,6 +530,14 @@ class ProjectDigitalTwin {
       payments: this.data.payments,
       contactRoles: this.data.contactRoles,
       purchaseOrders: this.data.purchaseOrders,
+      funding: this.data.funding,
+      invoices: this.data.invoices,
+      risks: this.data.risks,
+      meetings: this.data.meetings,
+      tasks: this.data.tasks,
+      milestones: this.data.milestones,
+      issues: this.data.issues,
+      approvals: this.data.approvals,
       
       // Agent data
       findings: this.findings,

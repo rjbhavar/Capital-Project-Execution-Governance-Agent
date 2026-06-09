@@ -1,20 +1,38 @@
 import axios from 'axios';
 import { createSession, getSessionId, clearSession } from './auth';
 
-// Use proxy in development, direct URL in production
-const BASE_URL = import.meta.env.DEV ? '/api' : import.meta.env.VITE_MREF_BASE_URL;
+/**
+ * Get base URL dynamically from session storage
+ * This ensures we connect to the user-provided MREF instance
+ */
+const getBaseUrl = () => {
+  const storedUrl = sessionStorage.getItem('mref_url');
+  if (storedUrl) {
+    return import.meta.env.DEV ? '/api' : storedUrl;
+  }
+  // Fallback to env var only if no session URL
+  return import.meta.env.DEV ? '/api' : (import.meta.env.VITE_MREF_BASE_URL || '');
+};
 
 /**
- * Create authenticated axios instance
+ * Create authenticated axios instance with dynamic baseURL
  */
 const apiClient = axios.create({
-  baseURL: BASE_URL,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
   }
 });
+
+// Update baseURL before each request to ensure it's always current
+apiClient.interceptors.request.use(
+  (config) => {
+    config.baseURL = getBaseUrl();
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 /**
  * Request interceptor - attach JSESSIONID to all requests
